@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+model Course {
+  id             Int          @id @default(autoincrement())
+  title          String
+  description    String
+  startDate      DateTime
+  endDate        DateTime
+  capacity       Int
+  seatsAvailable Int
+  enrollment     Enrollment[]
+}
+
+model Instructor {
+  id    Int     @id @default(autoincrement())
+  name  String
+  email String  @unique
+  bio   String?
+}
+
+model Student {
+  id         Int          @id @default(autoincrement())
+  name       String
+  email      String
+  enrolledAt DateTime
+  enrollment Enrollment[]
+}
+
+model Enrollment {
+  id             Int       @id @default(autoincrement())
+  studentId      Int
+  student        Student   @relation(fields: [studentId], references: [id])
+  courseId       Int
+  course         Course    @relation(fields: [courseId], references: [id])
+  enrolledAt     DateTime
+  completed      Boolean   @default(false)
+  completionDate DateTime?
+}
