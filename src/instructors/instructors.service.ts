@@ -1,26 +1,39 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateInstructorDto } from './dto/create-instructor.dto';
-import { UpdateInstructorDto } from './dto/update-instructor.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { errorCatch } from 'src/utils/errorRes';
+import { successRes } from 'src/utils/successRes';
 
 @Injectable()
 export class InstructorsService {
-  create(createInstructorDto: CreateInstructorDto) {
-    return 'This action adds a new instructor';
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(createInstructorDto: CreateInstructorDto) {
+    try {
+      const existsEmail = await this.prisma.instructor.findUnique({
+        where: { email: createInstructorDto.email },
+      });
+
+      if (existsEmail) {
+        throw new ConflictException(
+          `Instructor with email ${createInstructorDto.email} already exists`,
+        );
+      }
+      const newInstructor = await this.prisma.instructor.create({
+        data: createInstructorDto,
+      });
+      return successRes(newInstructor, 201);
+    } catch (error) {
+      return errorCatch(error);
+    }
   }
 
-  findAll() {
-    return `This action returns all instructors`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} instructor`;
-  }
-
-  update(id: number, updateInstructorDto: UpdateInstructorDto) {
-    return `This action updates a #${id} instructor`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} instructor`;
+  async findAll() {
+    try {
+      const instructors = await this.prisma.instructor.findMany();
+      return successRes(instructors);
+    } catch (error) {
+      return errorCatch(error);
+    }
   }
 }

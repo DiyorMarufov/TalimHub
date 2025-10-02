@@ -16,21 +16,27 @@ model Course {
   capacity       Int
   seatsAvailable Int
   enrollment     Enrollment[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
 model Instructor {
-  id    Int     @id @default(autoincrement())
-  name  String
-  email String  @unique
-  bio   String?
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Student {
   id         Int          @id @default(autoincrement())
   name       String
-  email      String
+  email      String       @unique
   enrolledAt DateTime
   enrollment Enrollment[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 }
 
 model Enrollment {
@@ -42,4 +48,6 @@ model Enrollment {
   enrolledAt     DateTime
   completed      Boolean   @default(false)
   completionDate DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }

@@ -1,26 +1,37 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateStudentDto } from './dto/create-student.dto';
-import { UpdateStudentDto } from './dto/update-student.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { successRes } from 'src/utils/successRes';
+import { errorCatch } from 'src/utils/errorRes';
 
 @Injectable()
 export class StudentsService {
-  create(createStudentDto: CreateStudentDto) {
-    return 'This action adds a new student';
+  constructor(private readonly prisma: PrismaService) {}
+  async create(createStudentDto: CreateStudentDto) {
+    try {
+      const existsEmail = await this.prisma.student.findUnique({
+        where: { email: createStudentDto.email },
+      });
+
+      if (existsEmail) {
+        throw new ConflictException(
+          `Instructor with email ${createStudentDto.email} already exists`,
+        );
+      }
+      const newInstructor = await this.prisma.student.create({
+        data: createStudentDto,
+      });
+      return successRes(newInstructor, 201);
+    } catch (error) {
+      return errorCatch(error);
+    }
   }
 
-  findAll() {
+  async findAll() {
     return `This action returns all students`;
   }
 
-  findOne(id: number) {
+  async findOne(id: number) {
     return `This action returns a #${id} student`;
-  }
-
-  update(id: number, updateStudentDto: UpdateStudentDto) {
-    return `This action updates a #${id} student`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} student`;
   }
 }
