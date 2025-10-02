@@ -32,6 +32,18 @@ export class CoursesController {
     return this.coursesService.findAll();
   }
 
+  @Get(':id/roster')
+  @ApiOperation({ summary: 'Get all students enrolled in a course' })
+  @ApiParam({ name: 'id', description: 'Course ID', example: 1 })
+  @ApiResponse({
+    status: 200,
+    description: 'List of enrolled students returned.',
+  })
+  @ApiResponse({ status: 404, description: 'Course not found.' })
+  enrolledCoursesByStudents(@Param('id', ParseIntPipe) id: number) {
+    return this.coursesService.enrolledCoursesByStudents(id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get course by ID' })
   @ApiParam({ name: 'id', example: 1 })

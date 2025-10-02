@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { successRes } from 'src/utils/successRes';
@@ -28,10 +32,47 @@ export class StudentsService {
   }
 
   async findAll() {
-    return `This action returns all students`;
+    try {
+      const students = await this.prisma.student.findMany();
+      return successRes(students);
+    } catch (error) {
+      return errorCatch(error);
+    }
+  }
+
+  async enrollmentStudentHistory(id: number) {
+    try {
+      const students = await this.prisma.student.findUnique({
+        where: { id },
+        include: {
+          enrollment: {
+            include: {
+              course: true,
+            },
+            orderBy: { enrolledDate: 'desc' },
+          },
+        },
+      });
+
+      if (!students) {
+        throw new NotFoundException(`Student with ${id} not found`);
+      }
+      return successRes(students);
+    } catch (error) {
+      return errorCatch(error);
+    }
   }
 
   async findOne(id: number) {
-    return `This action returns a #${id} student`;
+    try {
+      const student = await this.prisma.student.findUnique({ where: { id } });
+
+      if (!student) {
+        throw new NotFoundException(`Student with ID ${id} not found`);
+      }
+      return successRes(student);
+    } catch (error) {
+      return errorCatch(error);
+    }
   }
 }

@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -11,6 +12,8 @@ import { successRes } from 'src/utils/successRes';
 
 @Injectable()
 export class CoursesService {
+  private readonly logger = new Logger(CoursesService.name);
+
   constructor(private readonly prisma: PrismaService) {}
   async create(createCourseDto: CreateCourseDto) {
     try {
@@ -23,6 +26,9 @@ export class CoursesService {
         data: newCourse,
       });
 
+      this.logger.log(
+        `Course created: courseId=${createdCourse.id}, time=${new Date().toISOString()}`,
+      );
       return successRes(createdCourse, 201);
     } catch (error) {
       return errorCatch(error);
@@ -31,8 +37,29 @@ export class CoursesService {
 
   async findAll() {
     try {
-      const courses = await this.prisma.course.findMany();
+      const courses = await this.prisma.course.findMany({});
       return successRes(courses);
+    } catch (error) {
+      return errorCatch(error);
+    }
+  }
+
+  async enrolledCoursesByStudents(id: number) {
+    try {
+      const enrolledCourse = await this.prisma.course.findUnique({
+        where: { id },
+        include: {
+          enrollment: {
+            include: {
+              student: true,
+            },
+          },
+        },
+      });
+      if (!enrolledCourse) {
+        throw new NotFoundException(`Course with ID ${id} not found`);
+      }
+      return successRes(enrolledCourse);
     } catch (error) {
       return errorCatch(error);
     }
@@ -71,16 +98,13 @@ export class CoursesService {
           where: { courseId: id },
         });
 
-        const newCapacity = updateCourseDto.capacity;
-        const newSeatsAvailable = newCapacity - enrolledCount;
-
-        if (newSeatsAvailable < 0) {
+        if (updateCourseDto.capacity < enrolledCount) {
           throw new BadRequestException(
             `Cannot reduce capacity below number of enrolled students (${enrolledCount}).`,
           );
         }
 
-        updateData.seatsAvailable = newSeatsAvailable;
+        updateData.seatsAvailable = updateCourseDto.capacity - enrolledCount;
       }
 
       const updatedCourse = await this.prisma.course.update({
@@ -88,6 +112,11 @@ export class CoursesService {
         data: updateData,
       });
 
+      this.logger.log(
+        `Course updated: courseId=${id}, updatedFields=${Object.keys(
+          updateData,
+        ).join(',')}, time=${new Date().toISOString()}`,
+      );
       return successRes(updatedCourse);
     } catch (error) {
       return errorCatch(error);
@@ -112,6 +141,9 @@ export class CoursesService {
           'Cannot delete this course because students are enrolled!',
         );
       }
+      this.logger.log(
+        `Course deleted: courseId=${id}, time=${new Date().toISOString()}`,
+      );
       await this.prisma.course.delete({ where: { id } });
       return successRes();
     } catch (error) {

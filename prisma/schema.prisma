@@ -45,9 +45,11 @@ model Enrollment {
   student        Student   @relation(fields: [studentId], references: [id])
   courseId       Int
   course         Course    @relation(fields: [courseId], references: [id])
-  enrolledAt     DateTime
+  enrolledDate   DateTime
   completed      Boolean   @default(false)
   completionDate DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+
+  @@unique([studentId, courseId])
 }

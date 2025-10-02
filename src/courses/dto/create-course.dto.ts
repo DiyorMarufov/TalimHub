@@ -1,4 +1,10 @@
-import { IsDate, IsInt, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsDate,
+  IsInt,
+  IsNotEmpty,
+  IsPositive,
+  IsString,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateCourseDto {
@@ -32,6 +38,7 @@ export class CreateCourseDto {
 
   @ApiProperty({ example: 30 })
   @IsInt()
+  @IsPositive()
   @IsNotEmpty()
   capacity: number;
 }

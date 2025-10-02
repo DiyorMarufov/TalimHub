@@ -1,34 +1,68 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, Get } from '@nestjs/common';
 import { EnrollmentService } from './enrollment.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
-import { UpdateEnrollmentDto } from './dto/update-enrollment.dto';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 
-@Controller('enrollment')
+@ApiTags('Enrollments')
+@Controller()
 export class EnrollmentController {
   constructor(private readonly enrollmentService: EnrollmentService) {}
 
-  @Post()
-  create(@Body() createEnrollmentDto: CreateEnrollmentDto) {
-    return this.enrollmentService.create(createEnrollmentDto);
+  @Post('enroll')
+  @ApiOperation({ summary: 'Enroll a student into a course' })
+  @ApiResponse({ status: 201, description: 'Enrollment created successfully' })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
+  enroll(@Body() createEnrollmentDto: CreateEnrollmentDto) {
+    return this.enrollmentService.enroll(createEnrollmentDto);
   }
 
-  @Get()
-  findAll() {
-    return this.enrollmentService.findAll();
+  @Post('complete')
+  @ApiOperation({ summary: 'Complete an enrollment' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { enrollmentId: { type: 'number', example: 5 } },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Enrollment marked as completed' })
+  @ApiResponse({ status: 404, description: 'Enrollment not found' })
+  complete(@Body() body: { enrollmentId: number }) {
+    return this.enrollmentService.complete(body.enrollmentId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.enrollmentService.findOne(+id);
+  @Post('unenroll')
+  @ApiOperation({ summary: 'Unenroll a student from a course' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { enrollmentId: { type: 'number', example: 5 } },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Successfully unenrolled' })
+  @ApiResponse({ status: 404, description: 'Enrollment not found' })
+  unenroll(@Body() body: { enrollmentId: number }) {
+    return this.enrollmentService.unenroll(body.enrollmentId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEnrollmentDto: UpdateEnrollmentDto) {
-    return this.enrollmentService.update(+id, updateEnrollmentDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.enrollmentService.remove(+id);
+  @Get('enrollments/active')
+  @ApiOperation({ summary: 'Get all active enrollments' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of active enrollments',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'number', example: 1 },
+          studentId: { type: 'number', example: 10 },
+          courseId: { type: 'number', example: 3 },
+          isCompleted: { type: 'boolean', example: false },
+        },
+      },
+    },
+  })
+  activeEnrollments() {
+    return this.enrollmentService.activeEnrollments();
   }
 }
