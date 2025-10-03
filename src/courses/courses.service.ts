@@ -35,9 +35,25 @@ export class CoursesService {
     }
   }
 
-  async findAll() {
+  async findAll(status?: 'boshlanmagan' | 'davom' | 'tugagan') {
     try {
-      const courses = await this.prisma.course.findMany({});
+      const now = new Date();
+      let where: any = {};
+
+      if (status === 'boshlanmagan') {
+        where.startDate = { gt: now };
+      } else if (status === 'davom') {
+        where.startDate = { lte: now };
+        where.endDate = { gte: now };
+      } else if (status === 'tugagan') {
+        where.endDate = { lt: now };
+      }
+
+      const courses = await this.prisma.course.findMany({
+        where,
+        orderBy: { startDate: 'asc' },
+      });
+
       return successRes(courses);
     } catch (error) {
       return errorCatch(error);

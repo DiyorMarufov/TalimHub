@@ -7,11 +7,18 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { CoursesService } from './courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('Courses')
 @Controller('courses')
@@ -26,10 +33,16 @@ export class CoursesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all courses' })
-  @ApiResponse({ status: 200, description: 'List of all courses' })
-  findAll() {
-    return this.coursesService.findAll();
+  @ApiOperation({ summary: 'Get all courses (with optional filter)' })
+  @ApiResponse({ status: 200, description: 'List of courses' })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ['boshlanmagan', 'davom', 'tugagan'],
+    description: 'Filter by course status',
+  })
+  findAll(@Query('status') status?: 'boshlanmagan' | 'davom' | 'tugagan') {
+    return this.coursesService.findAll(status);
   }
 
   @Get(':id/roster')
